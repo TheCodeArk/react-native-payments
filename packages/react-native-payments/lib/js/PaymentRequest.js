@@ -342,14 +342,9 @@ export default class PaymentRequest {
     payerEmail: string,
     paymentToken?: string,
   }) {
-    // On Android, we don't have `onShippingAddressChange` events, so we
-    // set the shipping address when the user accepts.
-    //
-    // Developers will only have access to it in the `PaymentResponse`.
-    if (IS_ANDROID) {
-      const { shippingAddress } = details;
-      this._shippingAddress = shippingAddress;
-    }
+    // Developers will only have access to full address it in the `PaymentResponse`.
+    const { shippingAddress } = details;
+    this._shippingAddress = shippingAddress;
 
     const paymentResponse = new PaymentResponse({
       requestId: this.id,
@@ -359,9 +354,9 @@ export default class PaymentRequest {
       shippingOption: IS_IOS ? this._shippingOption : null,
       payerName: this._options.requestPayerName ? this._shippingAddress.recipient : null,
       payerPhone: this._options.requestPayerPhone ? this._shippingAddress.phone : null,
-      payerEmail: IS_ANDROID && this._options.requestPayerEmail
+      payerEmail: details.payerEmail && this._options.requestPayerEmail
         ? details.payerEmail
-        : null
+        : null,
     });
 
     return this._acceptPromiseResolver(paymentResponse);

@@ -337,9 +337,44 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 {
     NSString *transactionId = payment.token.transactionIdentifier;
     NSString *paymentData = [[NSString alloc] initWithData:payment.token.paymentData encoding:NSUTF8StringEncoding];
-    NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:3];
+    NSMutableDictionary *paymentResponse = [[NSMutableDictionary alloc]initWithCapacity:5];
     [paymentResponse setObject:transactionId forKey:@"transactionIdentifier"];
     [paymentResponse setObject:paymentData forKey:@"paymentData"];
+        
+    NSDictionary *shippingAddress = [[NSMutableDictionary alloc] init];
+    
+    if (payment.shippingContact) {
+        if (payment.shippingContact.emailAddress) {
+            [paymentResponse setValue:payment.shippingContact.emailAddress
+                               forKey:@"payerEmail"];
+        }
+        
+        if (payment.shippingContact.name) {
+            [shippingAddress setValue:[[
+                                       NSString stringWithFormat:@"%@ %@",
+                                       payment.shippingContact.name.givenName,
+                                       payment.shippingContact.name.familyName
+                                       ] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]
+                               forKey:@"recipient"];
+        }
+        if (payment.shippingContact.phoneNumber) {
+            [shippingAddress setValue:payment.shippingContact.phoneNumber.stringValue
+                               forKey:@"phone"];
+        }
+        
+        
+        [shippingAddress setValue:payment.shippingContact.postalAddress.state forKey:@"region"];
+        [shippingAddress setValue:payment.shippingContact.postalAddress.subLocality forKey:@"dependentLocality"];
+        [shippingAddress setValue:payment.shippingContact.postalAddress.city forKey:@"city"];
+        [shippingAddress setValue:payment.shippingContact.postalAddress.ISOCountryCode forKey:@"country"];
+        [shippingAddress setValue:[NSNull null] forKey:@"sortingCode"];
+        [shippingAddress setValue:payment.shippingContact.postalAddress.postalCode forKey:@"postalCode"];
+        [shippingAddress setValue:[NSNull null] forKey:@"organization"];
+        [shippingAddress setValue:[NSNull null] forKey:@"languageCode"];
+        [shippingAddress setValue:payment.shippingContact.postalAddress.street forKey:@"addressLine"];
+    }
+    
+    [paymentResponse setObject:shippingAddress forKey:@"shippingAddress"];
     
     if (token) {
         [paymentResponse setObject:token forKey:@"paymentToken"];
@@ -360,3 +395,4 @@ RCT_EXPORT_METHOD(handleDetailsUpdate: (NSDictionary *)details
 }
 
 @end
+
